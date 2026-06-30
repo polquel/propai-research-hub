@@ -9,8 +9,10 @@ const {
   createCompany,
   updateCompany,
   deleteCompany,
+  searchApollo,
 } = require('../controllers/companyController');
 
+router.post('/search-apollo', searchApollo); // Must be before /:id routes
 router.get('/', getAllCompanies);
 router.get('/:id', getCompanyById);
 router.post('/', createCompany);

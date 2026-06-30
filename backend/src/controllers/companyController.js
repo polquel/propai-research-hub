@@ -1,4 +1,4 @@
-// Logic for each company API endpoint — same pattern as articleController.js
+// Logic for company endpoints — includes local CRUD and Apollo import search.
 
 const { PrismaClient } = require('@prisma/client');
 const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
@@ -53,4 +53,65 @@ async function deleteCompany(req, res) {
   res.status(204).send();
 }
 
-module.exports = { getAllCompanies, getCompanyById, createCompany, updateCompany, deleteCompany };
+// Search Apollo.io for property management companies and return candidates.
+// The results are NOT saved yet — the user picks which ones to import.
+async function searchApollo(req, res) {
+  const { query = 'property management', country } = req.body;
+  const apiKey = process.env.APOLLO_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: 'APOLLO_API_KEY not set in .env' });
+  }
+
+  // Build the search filters for Apollo
+  // Filter by industry instead of keyword — more accurate for niche sectors
+  const body = {
+    organization_industries: [query],
+    per_page: 20,
+    page: 1,
+  };
+
+  if (country) {
+    body.organization_locations = [country];
+  }
+
+  const apolloResponse = await fetch('https://api.apollo.io/api/v1/organizations/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Api-Key': apiKey,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!apolloResponse.ok) {
+    const errorText = await apolloResponse.text();
+    return res.status(502).json({ error: 'Apollo API error', detail: errorText });
+  }
+
+  const data = await apolloResponse.json();
+  const organizations = data.organizations || [];
+
+  // Map Apollo's fields to our Company shape
+  const results = organizations.map((org) => ({
+    name: org.name,
+    website: org.website_url || org.primary_domain,
+    country: org.country,
+    services: org.industry,
+    employeeCount: org.estimated_num_employees
+      ? String(org.estimated_num_employees)
+      : null,
+    notes: org.short_description || null,
+  }));
+
+  res.json(results);
+}
+
+module.exports = {
+  getAllCompanies,
+  getCompanyById,
+  createCompany,
+  updateCompany,
+  deleteCompany,
+  searchApollo,
+};

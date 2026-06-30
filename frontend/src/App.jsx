@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getAllCompanies, getAllOpportunities } from './services/api';
 import CompanyForm from './components/CompanyForm';
 import CompanyList from './components/CompanyList';
+import CompanyImport from './components/CompanyImport';
 import OpportunityForm from './components/OpportunityForm';
 import OpportunityList from './components/OpportunityList';
 
@@ -72,6 +73,9 @@ export default function App() {
           <>
             {activeTab === 'companies' && (
               <>
+                <div className="mb-6">
+                  <CompanyImport onCompanyAdded={handleCompanyAdded} />
+                </div>
                 <div className="mb-8">
                   <CompanyForm onCompanyAdded={handleCompanyAdded} />
                 </div>
