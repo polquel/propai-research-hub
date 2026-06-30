@@ -1,0 +1,45 @@
+// This file is the blueprint for your database.
+// Prisma reads this file and creates the actual database tables.
+
+generator client {
+  provider = "prisma-client-js"
+  // Output goes to node_modules/.prisma/client — importable as '@prisma/client'
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Article = the main thing we're saving (a research article, paper, or note)
+model Article {
+  id          String   @id @default(uuid()) // Unique ID, auto-generated
+  title       String                        // Required: the article title
+  url         String?                       // Optional: link to the article
+  summary     String?                       // Optional: AI or manual summary
+  notes       String?                       // Optional: your personal annotations
+  source      String?                       // Optional: e.g. "arXiv", "Forbes"
+  publishedAt DateTime?                     // Optional: when the article was published
+  savedAt     DateTime @default(now())      // Auto-set: when YOU saved it
+
+  tags        ArticleTag[] // An article can have many tags
+}
+
+// Tag = a label you attach to articles (e.g. "chatbots", "lease-management")
+model Tag {
+  id   String @id @default(uuid())
+  name String @unique // No two tags can have the same name
+
+  articles ArticleTag[] // A tag can be on many articles
+}
+
+// ArticleTag = the bridge between Article and Tag (many-to-many relationship)
+// Think of it as a row that says "Article X has Tag Y"
+model ArticleTag {
+  articleId String
+  tagId     String
+
+  article Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId]) // The combination of both IDs is the unique key
+}
