@@ -4,6 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { getPainPoints } from '../services/api';
+import { exportPainPointsMD } from '../services/exportUtils';
 
 // Color the count badge based on how widespread the problem is
 function severityColor(count) {
@@ -42,8 +43,9 @@ export default function PainPoints() {
 
   return (
     <div className="max-w-3xl">
-      {/* Explanation header */}
-      <div className="bg-[var(--accent-bg)] border border-[var(--accent-border)] rounded-xl p-4 mb-6">
+      {/* Header row: explanation + export button */}
+      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="bg-[var(--accent-bg)] border border-[var(--accent-border)] rounded-xl p-4 flex-1">
         <p className="text-sm text-[var(--accent)] font-medium">Product intelligence</p>
         <p className="text-sm text-gray-600 mt-1">
           Based on {themes.reduce((s, t) => s + t.count, 0)} complaint signals across{' '}
@@ -51,6 +53,13 @@ export default function PainPoints() {
           Each row is a recurring theme found in negative reviews — the count is the number of
           companies where at least one review matches that complaint.
         </p>
+      </div>
+        <button
+          onClick={() => exportPainPointsMD(themes)}
+          className="text-xs text-[var(--accent)] hover:underline font-medium shrink-0 mt-1"
+        >
+          Export Markdown ↓
+        </button>
       </div>
 
       {/* Theme list */}

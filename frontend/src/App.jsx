@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getAllCompanies, getAllOpportunities, getCities } from './services/api';
+import { exportCompaniesCSV, exportOpportunitiesMD } from './services/exportUtils';
 import CompanyForm from './components/CompanyForm';
 import CompanyList from './components/CompanyList';
 import CompanyImport from './components/CompanyImport';
@@ -103,7 +104,15 @@ export default function App() {
 
             {/* Main: company list */}
             <main className="flex-1 min-w-0">
-              <SectionLabel text={`${companies.length} companies${Object.values(filters).some(Boolean) ? ' (filtered)' : ''}`} />
+              <div className="flex items-center justify-between mb-4">
+                <SectionLabel text={`${companies.length} companies${Object.values(filters).some(Boolean) ? ' (filtered)' : ''}`} />
+                <button
+                  onClick={() => exportCompaniesCSV(companies)}
+                  className="text-xs text-[var(--accent)] hover:underline font-medium"
+                >
+                  Export CSV ↓
+                </button>
+              </div>
               {isLoadingCompanies ? (
                 <div className="flex justify-center py-16">
                   <div className="w-5 h-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
@@ -122,7 +131,15 @@ export default function App() {
               <OpportunityForm onOpportunityAdded={handleOpportunityAdded} />
             </aside>
             <main className="flex-1 min-w-0">
-              <SectionLabel text={`${opportunities.length} feature ideas — sorted by viability`} />
+              <div className="flex items-center justify-between mb-4">
+                <SectionLabel text={`${opportunities.length} feature ideas — sorted by viability`} />
+                <button
+                  onClick={() => exportOpportunitiesMD(opportunities)}
+                  className="text-xs text-[var(--accent)] hover:underline font-medium"
+                >
+                  Export Markdown ↓
+                </button>
+              </div>
               {isLoadingOpp ? (
                 <div className="flex justify-center py-16">
                   <div className="w-5 h-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
@@ -161,6 +178,6 @@ function TabButton({ label, active, onClick }) {
 
 function SectionLabel({ text }) {
   return (
-    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">{text}</p>
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{text}</p>
   );
 }
