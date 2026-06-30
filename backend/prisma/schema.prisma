@@ -32,6 +32,18 @@ model Tag {
   articles ArticleTag[] // A tag can be on many articles
 }
 
+// Company = a property management company found during research
+model Company {
+  id            String   @id @default(uuid())
+  name          String
+  website       String?
+  country       String?
+  services      String?  // e.g. "billing, maintenance, resident portal"
+  employeeCount String?  // e.g. "50-200", "500+"
+  notes         String?  // your personal observations
+  addedAt       DateTime @default(now())
+}
+
 // ArticleTag = the bridge between Article and Tag (many-to-many relationship)
 // Think of it as a row that says "Article X has Tag Y"
 model ArticleTag {
