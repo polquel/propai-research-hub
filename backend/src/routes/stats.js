@@ -114,4 +114,153 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/stats/pain-points
+// Scans all scraped review texts for recurring complaint patterns.
+// Each "theme" is a named category with a list of trigger keywords.
+// Returns: [{ theme, count, companies, examples }] sorted by count desc.
+router.get('/pain-points', async (req, res) => {
+  try {
+    const rows = await prisma.company.findMany({
+      where: { reviews: { not: null } },
+      select: { id: true, name: true, city: true, rating: true, reviews: true },
+    });
+
+    // Each theme defines what complaint it represents and which keywords signal it.
+    // Keywords match against lowercased review text (English — reviews were scraped in English).
+    const THEMES = [
+      {
+        theme: 'No response / Unreachable',
+        description: 'They don\'t pick up the phone or reply to messages',
+        keywords: [
+          'no answer', 'don\'t answer', 'don\'t respond', 'won\'t respond',
+          'never respond', 'calling every day', 'can\'t reach', 'impossible to contact',
+          'never picks up', 'nobody answers', 'not responding', 'silence',
+          'they disappeared', 'no response', 'unreachable', 'contact number',
+          'ignor', 'no devuelven', 'no responden', 'no contestan',
+        ],
+      },
+      {
+        theme: 'Financial opacity / Billing problems',
+        description: 'Unclear fees, wrong invoices, unexplained charges',
+        keywords: [
+          'opaque', 'no transparency', 'not transparent', 'no information about',
+          'accounts', 'special assessment', 'wrong bill', 'incorrect invoice',
+          'exorbitant', 'hidden fee', 'unjustified', 'without explanation',
+          'no receipt', 'no breakdown', 'overcharg', 'billing', 'invoice',
+          'derrama', 'sin explicacion', 'facturas',
+        ],
+      },
+      {
+        theme: 'Only collect fees, ignore problems',
+        description: 'Quick to bill but absent when residents need help',
+        keywords: [
+          'only respond when', 'collect payment', 'collect their pay',
+          'when there are problems', 'silence when', 'money but no service',
+          'just want money', 'only care about money', 'collect fees',
+          'don\'t forget to collect', 'but when problems', 'start off strong',
+          'gradually disappear', 'cobran pero',
+        ],
+      },
+      {
+        theme: 'Maintenance ignored / Repairs neglected',
+        description: 'Breakdowns and repairs left unresolved for months',
+        keywords: [
+          'water leak', 'leak', 'repair', 'maintenance', 'broken', 'fix',
+          'not fixed', 'never fix', 'no repair', 'damage', 'defect',
+          'won\'t fix', 'avería', 'gotera', 'reparacion', 'mantenimiento',
+        ],
+      },
+      {
+        theme: 'Rude or aggressive staff',
+        description: 'Staff yell, hang up, or treat residents with contempt',
+        keywords: [
+          'yell', 'hang up', 'rude', 'aggressive', 'disrespectful',
+          'insulting', 'humiliating', 'treat us badly', 'bad treatment',
+          'unprofessional', 'disdainful', 'contempt', 'maleducado',
+          'malas formas', 'faltar al respeto',
+        ],
+      },
+      {
+        theme: 'Missed meetings / No minutes',
+        description: 'Skipping owner assemblies or not documenting decisions',
+        keywords: [
+          'meeting', 'assembly', 'minutes', 'don\'t show up', 'doesn\'t show',
+          'never comes', 'no meeting', 'no assembly', 'acta', 'reunion',
+          'junta de propietarios', 'asamblea',
+        ],
+      },
+      {
+        theme: 'Cronyism / Sides with landlord not residents',
+        description: 'Protects building owners\' interests over the community',
+        keywords: [
+          'cronyism', 'own interests', 'side with', 'always help the',
+          'favors the owner', 'not neutral', 'bias', 'corrupt',
+          'enchufismo', 'amiguismo', 'intereses propios',
+        ],
+      },
+      {
+        theme: 'Incompetence / Negligence',
+        description: 'Mistakes, wrong decisions, general lack of competence',
+        keywords: [
+          'incompetent', 'clueless', 'negligent', 'careless', 'disgrace',
+          'appalling', 'terrible', 'useless', 'worthless', 'disaster',
+          'shambles', 'inadequate', 'horrible', 'dreadful',
+          'incompetente', 'negligencia', 'desastre', 'vergonzoso',
+        ],
+      },
+    ];
+
+    // For each theme, scan every review and collect matching results
+    const results = THEMES.map(({ theme, description, keywords }) => {
+      const matchingCompanies = [];
+      const examples = [];
+
+      for (const company of rows) {
+        const reviewList = JSON.parse(company.reviews || '[]');
+        const companyMatches = [];
+
+        for (const reviewText of reviewList) {
+          const lower = reviewText.toLowerCase();
+          const hit = keywords.some((kw) => lower.includes(kw.toLowerCase()));
+          if (hit) {
+            companyMatches.push(reviewText);
+          }
+        }
+
+        if (companyMatches.length > 0) {
+          matchingCompanies.push({
+            name: company.name,
+            city: company.city,
+            rating: company.rating,
+          });
+          // Collect up to 3 example reviews total across all companies
+          if (examples.length < 3) {
+            examples.push({
+              company: company.name,
+              city: company.city,
+              text: companyMatches[0].slice(0, 200),
+            });
+          }
+        }
+      }
+
+      return {
+        theme,
+        description,
+        count: matchingCompanies.length,   // number of *companies* (not reviews) with this complaint
+        companies: matchingCompanies,
+        examples,
+      };
+    });
+
+    // Sort: most widespread complaint first
+    results.sort((a, b) => b.count - a.count);
+
+    res.json(results);
+  } catch (error) {
+    console.error('pain-points error:', error);
+    res.status(500).json({ error: 'Failed to analyze pain points', detail: error.message });
+  }
+});
+
 module.exports = router;

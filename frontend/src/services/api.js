@@ -61,3 +61,8 @@ export async function getStats() {
   const response = await fetch('/api/stats');
   return response.json();
 }
+
+export async function getPainPoints() {
+  const response = await fetch('/api/stats/pain-points');
+  return response.json();
+}

@@ -1,4 +1,4 @@
-// Root component — Companies, AI Opportunities, and Charts tabs.
+// Root component — Companies, AI Opportunities, Charts, and Pain Points tabs.
 
 import { useState, useEffect, useCallback } from 'react';
 import { getAllCompanies, getAllOpportunities, getCities } from './services/api';
@@ -9,6 +9,7 @@ import CompanyFilters from './components/CompanyFilters';
 import OpportunityForm from './components/OpportunityForm';
 import OpportunityList from './components/OpportunityList';
 import Charts from './components/Charts';
+import PainPoints from './components/PainPoints';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('companies');
@@ -82,6 +83,7 @@ export default function App() {
           <TabButton label={`Companies (${companies.length})`} active={activeTab === 'companies'} onClick={() => setActiveTab('companies')} />
           <TabButton label={`AI Opportunities (${opportunities.length})`} active={activeTab === 'opportunities'} onClick={() => setActiveTab('opportunities')} />
           <TabButton label="Charts" active={activeTab === 'charts'} onClick={() => setActiveTab('charts')} />
+          <TabButton label="Pain Points" active={activeTab === 'painpoints'} onClick={() => setActiveTab('painpoints')} />
         </div>
 
         {/* Companies tab */}
@@ -134,6 +136,9 @@ export default function App() {
 
         {/* Charts tab */}
         {activeTab === 'charts' && <Charts />}
+
+        {/* Pain Points tab */}
+        {activeTab === 'painpoints' && <PainPoints />}
       </div>
     </div>
   );
