@@ -18,9 +18,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-**What it is:** A web app to gather, tag, summarize, and organize research about how AI is being integrated into property management. Think of it as a smart notebook.
+**What it is:** A research intelligence tool to investigate where and how AI could be applied to **neighborhood community management companies** — firms that manage HOAs (Homeowners Associations), residential building communities, and multi-tenant property complexes.
 
-**Core user story:** "As a CS student, I want to save articles, papers, and notes about AI + property management, tag them by topic, and search/filter them easily."
+**The bigger goal:** This app supports the design of a future SaaS product for this sector. Before building that product, we need to understand: who the players are, what they do, what their pain points are, and where AI can add real value.
+
+**This app is a structured research base, not a generic notebook.** Everything saved here should answer one of these questions:
+1. Who are the companies in this space? (names, size, location, services)
+2. What do they struggle with? (manual tasks, communication, billing, maintenance)
+3. What AI tools exist that could solve those problems?
+4. What would a competitive product look like?
+
+**Core user stories:**
+- "I want to save and tag articles and reports about AI in property management."
+- "I want to log companies I find (their website, services, region, size) with notes."
+- "I want to track potential AI use cases (e.g. chatbot for resident queries, predictive maintenance alerts) and rate their viability."
+- "I want to search across all my research to spot patterns and opportunities."
 
 ---
 
@@ -55,8 +67,6 @@ cd backend && npm run dev
 cd frontend && npm run dev
 ```
 
-> Note: The `backend/` and `frontend/` folders don't exist yet — they'll be created in Phase 1.
-
 ---
 
 ## Architecture Rules
@@ -70,7 +80,7 @@ cd frontend && npm run dev
 
 ## Core Data Models
 
-### Article
+### Article (a saved research item: news, paper, report, blog post)
 ```
 Article {
   id           String    @id @default(uuid())
@@ -81,16 +91,47 @@ Article {
   source       String?   // e.g., "arXiv", "Forbes", "YouTube"
   publishedAt  DateTime?
   savedAt      DateTime  @default(now())
-  tags         Tag[]     // Many-to-many relationship
+  tags         Tag[]     // Many-to-many
 }
 ```
 
-### Tag
+### Company (a firm in the neighborhood community management space)
+```
+Company {
+  id          String   @id @default(uuid())
+  name        String
+  website     String?
+  country     String?  // e.g., "Spain", "USA"
+  services    String?  // e.g., "billing, maintenance, resident portal"
+  employeeCount String? // e.g., "50-200"
+  notes       String?  // observations, pain points observed
+  addedAt     DateTime @default(now())
+  tags        Tag[]
+}
+```
+
+### AIUseCase (a potential AI application for the sector)
+```
+AIUseCase {
+  id           String  @id @default(uuid())
+  title        String  // e.g., "Chatbot for resident queries"
+  description  String?
+  targetArea   String? // e.g., "communication", "billing", "maintenance"
+  viability    Int?    // 1 (speculative) to 5 (proven, exists in market)
+  notes        String?
+  addedAt      DateTime @default(now())
+  tags         Tag[]
+}
+```
+
+### Tag (shared label across all three models)
 ```
 Tag {
-  id       String    @id @default(uuid())
-  name     String    @unique  // e.g., "lease-management", "chatbots"
-  articles Article[]
+  id         String     @id @default(uuid())
+  name       String     @unique  // e.g., "chatbots", "predictive-maintenance", "Spain"
+  articles   Article[]
+  companies  Company[]
+  useCases   AIUseCase[]
 }
 ```
 
@@ -99,26 +140,29 @@ Tag {
 ## Feature Roadmap (build in this order)
 
 ### Phase 1 — Foundation
-- [ ] Project scaffolding (folders, package.json)
-- [ ] Basic Express server with health check route (`GET /api/health`)
-- [ ] Prisma + SQLite setup with Article model
+- [x] Project scaffolding (folders, package.json)
+- [x] Basic Express server with health check route (`GET /api/health`)
+- [x] Prisma + SQLite setup with Article model
 - [ ] CRUD API for articles
 - [ ] Simple React frontend: article list + add form
 
-### Phase 2 — Organization
-- [ ] Tag system (add/remove tags on articles)
+### Phase 2 — Domain-Specific Research Tools
+- [ ] **Company profiles** — log companies in the sector (name, website, country, services, employee count, notes)
+- [ ] **AI use case tracker** — document potential AI applications (name, description, which type of company benefits, viability score 1–5)
+- [ ] Tag system — shared tags across articles, companies, and use cases
 - [ ] Search by title or tag
-- [ ] Filter by source or date
+- [ ] Filter by source, date, or company
 
-### Phase 3 — Research Features
-- [ ] Import from URL (auto-scrape title + description)
-- [ ] AI auto-summary via OpenAI API
-- [ ] Export to CSV or Markdown
+### Phase 3 — Intelligence Features
+- [ ] Import from URL (auto-scrape company name, description, and logo)
+- [ ] AI auto-summary via OpenAI API (summarize an article or a company's homepage)
+- [ ] Market map view — a visual grid of companies by region and service type
+- [ ] Export to CSV or Markdown (for use in a pitch deck or product spec)
 
 ### Phase 4 — Polish
 - [ ] Responsive mobile layout
 - [ ] Dark mode
-- [ ] Dashboard with stats (articles per tag, per month)
+- [ ] Dashboard: articles saved per week, companies tracked per region, top AI use cases by viability score
 
 ---
 
