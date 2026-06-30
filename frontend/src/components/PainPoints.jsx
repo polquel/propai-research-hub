@@ -45,7 +45,7 @@ export default function PainPoints() {
     <div className="max-w-3xl">
       {/* Header row: explanation + export button */}
       <div className="flex items-start justify-between gap-4 mb-6">
-      <div className="bg-[var(--accent-bg)] border border-[var(--accent-border)] rounded-xl p-4 flex-1">
+      <div className="bg-[var(--accent-bg)] border border-[var(--accent-border)] rounded-xl p-4 flex-1" style={{ background: 'var(--accent-bg)' }}>
         <p className="text-sm text-[var(--accent)] font-medium">Product intelligence</p>
         <p className="text-sm text-gray-600 mt-1">
           Based on {themes.reduce((s, t) => s + t.count, 0)} complaint signals across{' '}
@@ -69,11 +69,11 @@ export default function PainPoints() {
           return (
             <div
               key={t.theme}
-              className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm"
+              className="rounded-xl overflow-hidden shadow-sm border" style={{ background: 'var(--surface)', borderColor: 'var(--border-color)' }}
             >
               {/* Clickable header row */}
               <button
-                className="w-full text-left px-5 py-4 flex items-start gap-4 hover:bg-gray-50 transition-colors"
+                className="w-full text-left px-5 py-4 flex items-start gap-4 transition-colors hover:opacity-80"
                 onClick={() => setExpanded(isOpen ? null : i)}
               >
                 {/* Rank number */}
@@ -109,7 +109,7 @@ export default function PainPoints() {
 
               {/* Expanded: example reviews + affected companies */}
               {isOpen && (
-                <div className="border-t border-gray-100 px-5 py-4 bg-gray-50">
+                <div className="border-t px-5 py-4" style={{ borderColor: 'var(--border-color)', background: 'var(--surface-subtle)' }}>
                   {/* Example reviews */}
                   {t.examples.length > 0 && (
                     <div className="mb-4">
@@ -118,11 +118,11 @@ export default function PainPoints() {
                       </p>
                       <div className="flex flex-col gap-2">
                         {t.examples.map((ex, j) => (
-                          <div key={j} className="bg-white border border-gray-200 rounded-lg p-3">
-                            <p className="text-xs text-gray-500 mb-1 font-medium">
+                          <div key={j} className="rounded-lg p-3 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-color)' }}>
+                            <p className="text-xs mb-1 font-medium" style={{ color: 'var(--text-muted)' }}>
                               {ex.company} · {ex.city}
                             </p>
-                            <p className="text-sm text-gray-700 italic">"{ex.text}…"</p>
+                            <p className="text-sm italic" style={{ color: 'var(--text)' }}>"{ex.text}…"</p>
                           </div>
                         ))}
                       </div>
@@ -138,7 +138,7 @@ export default function PainPoints() {
                       {t.companies.slice(0, 15).map((c) => (
                         <span
                           key={c.name + c.city}
-                          className="text-xs bg-white border border-gray-200 rounded-full px-2 py-0.5 text-gray-600"
+                          className="text-xs rounded-full px-2 py-0.5 border" style={{ background: 'var(--surface)', borderColor: 'var(--border-color)', color: 'var(--text-muted)' }}
                           title={`${c.rating}⭐ · ${c.city}`}
                         >
                           {c.name}

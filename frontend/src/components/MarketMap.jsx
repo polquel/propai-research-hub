@@ -77,16 +77,16 @@ export default function MarketMap() {
       </div>
 
       {/* Scrollable table wrapper — cities may overflow on small screens */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+      <div className="overflow-x-auto rounded-xl shadow-sm border" style={{ borderColor: 'var(--border-color)' }}>
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="border-b" style={{ background: 'var(--surface-subtle)', borderColor: 'var(--border-color)' }}>
               {/* Top-left corner cell */}
-              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide w-44 sticky left-0 bg-gray-50 z-10">
+              <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide w-44 sticky left-0 z-10" style={{ color: 'var(--text-subtle)', background: 'var(--surface-subtle)' }}>
                 Type \ City
               </th>
               {cities.map((city) => (
-                <th key={city} className="px-3 py-3 text-xs font-semibold text-gray-600 whitespace-nowrap text-center min-w-[100px]">
+                <th key={city} className="px-3 py-3 text-xs font-semibold whitespace-nowrap text-center min-w-[100px]" style={{ color: 'var(--text-muted)' }}>
                   {city}
                 </th>
               ))}
@@ -94,9 +94,9 @@ export default function MarketMap() {
           </thead>
           <tbody>
             {types.map((type, rowIdx) => (
-              <tr key={type} className={rowIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+              <tr key={type} style={{ background: rowIdx % 2 === 0 ? 'var(--surface)' : 'var(--surface-subtle)' }}>
                 {/* Row label — sticky so it stays visible when scrolling horizontally */}
-                <td className="px-4 py-3 text-xs font-semibold text-gray-600 sticky left-0 bg-inherit z-10 border-r border-gray-100">
+                <td className="px-4 py-3 text-xs font-semibold sticky left-0 z-10 border-r" style={{ color: 'var(--text-muted)', background: 'inherit', borderColor: 'var(--border-color)' }}>
                   {TYPE_LABELS[type]}
                 </td>
                 {cities.map((city) => {
@@ -135,13 +135,13 @@ export default function MarketMap() {
 
       {/* Company list panel — shown below the grid when a cell is selected */}
       {selected && (
-        <div className="mt-4 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <div className="mt-4 rounded-xl p-5 shadow-sm border" style={{ background: 'var(--surface)', borderColor: 'var(--border-color)' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="font-semibold text-gray-800">
+              <h3 className="font-semibold" style={{ color: 'var(--text)' }}>
                 {TYPE_LABELS[selected.type]} in {selected.city}
               </h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-subtle)' }}>
                 {selected.cell.count} companies · avg {selected.cell.avgRating}★
               </p>
             </div>
