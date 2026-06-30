@@ -11,6 +11,7 @@ import OpportunityForm from './components/OpportunityForm';
 import OpportunityList from './components/OpportunityList';
 import Charts from './components/Charts';
 import PainPoints from './components/PainPoints';
+import MarketMap from './components/MarketMap';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('companies');
@@ -85,6 +86,7 @@ export default function App() {
           <TabButton label={`AI Opportunities (${opportunities.length})`} active={activeTab === 'opportunities'} onClick={() => setActiveTab('opportunities')} />
           <TabButton label="Charts" active={activeTab === 'charts'} onClick={() => setActiveTab('charts')} />
           <TabButton label="Pain Points" active={activeTab === 'painpoints'} onClick={() => setActiveTab('painpoints')} />
+          <TabButton label="Market Map" active={activeTab === 'marketmap'} onClick={() => setActiveTab('marketmap')} />
         </div>
 
         {/* Companies tab */}
@@ -156,6 +158,9 @@ export default function App() {
 
         {/* Pain Points tab */}
         {activeTab === 'painpoints' && <PainPoints />}
+
+        {/* Market Map tab */}
+        {activeTab === 'marketmap' && <MarketMap />}
       </div>
     </div>
   );

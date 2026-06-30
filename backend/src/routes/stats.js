@@ -114,6 +114,66 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/stats/market-map
+// Returns a city × company-type matrix with counts, avg ratings, and company lists.
+// Used to render the market landscape grid in the frontend.
+router.get('/market-map', async (req, res) => {
+  try {
+    // Find the top 10 cities by total company count
+    const topCityRows = await prisma.$queryRaw`
+      SELECT city, COUNT(*) as count
+      FROM Company
+      WHERE city IS NOT NULL AND city != ''
+      GROUP BY city
+      ORDER BY count DESC
+      LIMIT 10
+    `;
+    const topCities = topCityRows.map((r) => r.city);
+
+    // Aggregate count + avg rating per city × type combination
+    const matrixRows = await prisma.$queryRaw`
+      SELECT city, companyType, COUNT(*) as count, ROUND(AVG(rating), 1) as avgRating
+      FROM Company
+      WHERE city IN (
+        SELECT city FROM Company WHERE city IS NOT NULL GROUP BY city ORDER BY COUNT(*) DESC LIMIT 10
+      )
+      AND companyType IS NOT NULL
+      GROUP BY city, companyType
+    `;
+
+    // Fetch all companies in those top cities (for the click-to-expand list)
+    const companies = await prisma.company.findMany({
+      where: { city: { in: topCities }, companyType: { not: null } },
+      select: { id: true, name: true, city: true, companyType: true, rating: true, website: true },
+      orderBy: { rating: 'asc' },
+    });
+
+    // Build a lookup: "city|type" → { count, avgRating, companies[] }
+    const cells = {};
+    for (const row of matrixRows) {
+      const key = `${row.city}|${row.companyType}`;
+      cells[key] = {
+        count: Number(row.count),
+        avgRating: row.avgRating,
+        companies: [],
+      };
+    }
+    for (const c of companies) {
+      const key = `${c.city}|${c.companyType}`;
+      if (cells[key]) cells[key].companies.push(c);
+    }
+
+    res.json({
+      cities: topCities,                                             // ordered list of city names
+      types: ['property_manager', 'real_estate', 'admin_agency'],   // fixed row order
+      cells,
+    });
+  } catch (error) {
+    console.error('market-map error:', error);
+    res.status(500).json({ error: 'Failed to load market map', detail: error.message });
+  }
+});
+
 // GET /api/stats/pain-points
 // Scans all scraped review texts for recurring complaint patterns.
 // Each "theme" is a named category with a list of trigger keywords.
