@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { createCompany } from '../services/api';
 
+const inputClass =
+  'border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-white';
+
 async function searchApollo(query, country) {
   const response = await fetch('/api/companies/search-apollo', {
     method: 'POST',
@@ -17,7 +20,7 @@ export default function CompanyImport({ onCompanyAdded }) {
   const [country, setCountry] = useState('');
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [importedIds, setImportedIds] = useState(new Set()); // Track which results were imported
+  const [importedIds, setImportedIds] = useState(new Set());
   const [error, setError] = useState(null);
 
   async function handleSearch(event) {
@@ -40,45 +43,44 @@ export default function CompanyImport({ onCompanyAdded }) {
   async function handleImport(company, index) {
     const saved = await createCompany(company);
     onCompanyAdded(saved);
-    // Mark this result as imported so the button changes
     setImportedIds((prev) => new Set([...prev, index]));
   }
 
   return (
-    <div className="bg-white border border-indigo-100 rounded-xl p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-gray-800 mb-1">Import from Apollo</h2>
-      <p className="text-xs text-gray-400 mb-4">Search a real company database and import results directly</p>
+    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <h2 className="text-sm font-semibold text-gray-700 mb-1 uppercase tracking-wide">Import from Apollo</h2>
+      <p className="text-xs text-gray-400 mb-4">Search a real company database and import directly</p>
 
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+      <form onSubmit={handleSearch} className="flex flex-col gap-2 mb-4">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search query..."
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className={inputClass}
         />
-        <input
-          type="text"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          placeholder="Country (optional)"
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
-        <button
-          type="submit"
-          disabled={isSearching}
-          className="bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors whitespace-nowrap"
-        >
-          {isSearching ? 'Searching...' : 'Search'}
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            placeholder="Country (optional)"
+            className={`${inputClass} flex-1`}
+          />
+          <button
+            type="submit"
+            disabled={isSearching}
+            className="bg-[var(--accent)] text-white rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
+          >
+            {isSearching ? 'Searching...' : 'Search'}
+          </button>
+        </div>
       </form>
 
-      {error && (
-        <p className="text-red-500 text-sm mb-4">{error}</p>
-      )}
+      {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
       {results.length > 0 && (
-        <ul className="flex flex-col gap-2 max-h-96 overflow-y-auto">
+        <ul className="flex flex-col gap-2 max-h-72 overflow-y-auto">
           {results.map((company, index) => {
             const alreadyImported = importedIds.has(index);
             return (
@@ -88,11 +90,11 @@ export default function CompanyImport({ onCompanyAdded }) {
                   <div className="flex gap-2 text-xs text-gray-400 flex-wrap">
                     {company.country && <span>{company.country}</span>}
                     {company.employeeCount && <span>{company.employeeCount} employees</span>}
-                    {company.services && <span className="truncate max-w-xs">{company.services}</span>}
+                    {company.services && <span className="truncate max-w-[160px]">{company.services}</span>}
                   </div>
                   {company.website && (
                     <a href={company.website} target="_blank" rel="noreferrer"
-                      className="text-xs text-indigo-400 hover:underline truncate">
+                      className="text-xs text-[var(--accent)] hover:underline truncate">
                       {company.website}
                     </a>
                   )}
@@ -102,8 +104,8 @@ export default function CompanyImport({ onCompanyAdded }) {
                   disabled={alreadyImported}
                   className={`text-xs px-3 py-1.5 rounded-lg font-medium shrink-0 transition-colors ${
                     alreadyImported
-                      ? 'bg-green-100 text-green-600 cursor-default'
-                      : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                      ? 'bg-green-50 text-green-600 cursor-default'
+                      : 'bg-[var(--accent-bg)] text-[var(--accent)] hover:opacity-80'
                   }`}
                 >
                   {alreadyImported ? 'Imported ✓' : 'Import'}
@@ -115,7 +117,7 @@ export default function CompanyImport({ onCompanyAdded }) {
       )}
 
       {!isSearching && results.length === 0 && !error && (
-        <p className="text-gray-300 text-xs text-center py-4">Results will appear here</p>
+        <p className="text-gray-300 text-xs text-center py-3">Results will appear here</p>
       )}
     </div>
   );
