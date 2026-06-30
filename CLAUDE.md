@@ -18,21 +18,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-**What it is:** A research intelligence tool to investigate where and how AI could be applied to **neighborhood community management companies** — firms that manage HOAs (Homeowners Associations), residential building communities, and multi-tenant property complexes.
+**What it is:** A market intelligence tool to research the **property management sector** before building an AI product for it.
 
-**The bigger goal:** This app supports the design of a future SaaS product for this sector. Before building that product, we need to understand: who the players are, what they do, what their pain points are, and where AI can add real value.
+**The business model:**
+- **Future clients (who will pay):** HOAs — Homeowners' Associations, neighborhood communities, residential building communities
+- **What we're researching:** Property management companies — NOT as clients, but to understand the sector: who's operating, what services exist, what's missing, where AI could replace or improve things
+- **The end goal:** Use this research to build and sell an AI SaaS product that HOAs will buy
 
-**This app is a structured research base, not a generic notebook.** Everything saved here should answer one of these questions:
-1. Who are the companies in this space? (names, size, location, services)
-2. What do they struggle with? (manual tasks, communication, billing, maintenance)
-3. What AI tools exist that could solve those problems?
-4. What would a competitive product look like?
+**The two questions this app must answer:**
+1. **What does the market look like?** — Which companies currently serve HOAs, in which countries, with what services, and what gaps do they have?
+2. **What should our product do?** — Which AI features would HOAs pay for, and how viable is each one to build?
 
-**Core user stories:**
-- "I want to save and tag articles and reports about AI in property management."
-- "I want to log companies I find (their website, services, region, size) with notes."
-- "I want to track potential AI use cases (e.g. chatbot for resident queries, predictive maintenance alerts) and rate their viability."
-- "I want to search across all my research to spot patterns and opportunities."
+**This app only has two sections:**
+- **Companies** — property management firms (market map, not client list)
+- **AI Opportunities** — product feature ideas for our future HOA-targeted SaaS
 
 ---
 

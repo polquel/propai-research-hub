@@ -1,26 +1,22 @@
-// This is the entry point of the backend server.
-// It creates an Express app, registers routes, and starts listening for requests.
+// Entry point — creates the Express server and registers all routes.
 
-require('dotenv').config(); // Load .env variables into process.env (must be first)
-const express = require('express'); // Import the Express library
-const articleRoutes = require('./routes/articles');
+require('dotenv').config();
+const express = require('express');
 const companyRoutes = require('./routes/companies');
+const opportunityRoutes = require('./routes/opportunities');
 
-const app = express(); // Create the server instance
-const PORT = 3001;    // The port number the server will listen on
+const app = express();
+const PORT = 3001;
 
-app.use(express.json()); // Tell Express to automatically parse JSON request bodies
+app.use(express.json());
 
-// Health check route — used to confirm the server is running
-// Try it: GET http://localhost:3001/api/health
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-app.use('/api/articles', articleRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/opportunities', opportunityRoutes);
 
-// Start the server and begin listening for incoming requests
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

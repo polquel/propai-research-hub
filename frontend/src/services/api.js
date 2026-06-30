@@ -1,27 +1,7 @@
-// All fetch() calls to the backend — one place for all API communication.
+// All API calls to the backend — one file for all communication.
 
-const ARTICLES_URL = '/api/articles';
 const COMPANIES_URL = '/api/companies';
-
-// --- Articles ---
-
-export async function getAllArticles() {
-  const response = await fetch(ARTICLES_URL);
-  return response.json();
-}
-
-export async function createArticle(articleData) {
-  const response = await fetch(ARTICLES_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(articleData),
-  });
-  return response.json();
-}
-
-export async function deleteArticle(id) {
-  await fetch(`${ARTICLES_URL}/${id}`, { method: 'DELETE' });
-}
+const OPPORTUNITIES_URL = '/api/opportunities';
 
 // --- Companies ---
 
@@ -30,15 +10,35 @@ export async function getAllCompanies() {
   return response.json();
 }
 
-export async function createCompany(companyData) {
+export async function createCompany(data) {
   const response = await fetch(COMPANIES_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(companyData),
+    body: JSON.stringify(data),
   });
   return response.json();
 }
 
 export async function deleteCompany(id) {
   await fetch(`${COMPANIES_URL}/${id}`, { method: 'DELETE' });
+}
+
+// --- AI Opportunities ---
+
+export async function getAllOpportunities() {
+  const response = await fetch(OPPORTUNITIES_URL);
+  return response.json();
+}
+
+export async function createOpportunity(data) {
+  const response = await fetch(OPPORTUNITIES_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return response.json();
+}
+
+export async function deleteOpportunity(id) {
+  await fetch(`${OPPORTUNITIES_URL}/${id}`, { method: 'DELETE' });
 }
