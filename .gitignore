@@ -1,0 +1,17 @@
+# Dependencies — regenerated with npm install
+node_modules/
+
+# Environment variables — contain secrets, never commit
+.env
+.env.local
+
+# Database file — local only
+*.db
+*.sqlite
+
+# Build output
+dist/
+build/
+
+# OS files
+.DS_Store
