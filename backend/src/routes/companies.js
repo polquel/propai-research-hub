@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 
 const {
+  getCities,
   getAllCompanies,
   getCompanyById,
   createCompany,
@@ -12,7 +13,8 @@ const {
   searchApollo,
 } = require('../controllers/companyController');
 
-router.post('/search-apollo', searchApollo); // Must be before /:id routes
+router.post('/search-apollo', searchApollo);
+router.get('/meta/cities', getCities);
 router.get('/', getAllCompanies);
 router.get('/:id', getCompanyById);
 router.post('/', createCompany);

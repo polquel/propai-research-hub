@@ -6,10 +6,41 @@ const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
 const adapter = new PrismaBetterSqlite3({ url: 'file:./dev.db' });
 const prisma = new PrismaClient({ adapter });
 
+// Returns a list of cities with company counts, sorted alphabetically.
+async function getCities(req, res) {
+  try {
+    const rows = await prisma.company.groupBy({
+      by: ['city'],
+      where: { city: { not: null } },
+      _count: { city: true },
+      orderBy: { city: 'asc' },
+    });
+    res.json(rows.map((r) => ({ city: r.city, count: r._count.city })));
+  } catch (err) {
+    console.error('getCities error:', err);
+    res.status(500).json({ error: 'Failed to load cities', detail: err.message });
+  }
+}
+
 async function getAllCompanies(req, res) {
-  const companies = await prisma.company.findMany({
-    orderBy: { addedAt: 'desc' },
-  });
+  const { search, city, type, minRating, sort } = req.query;
+
+  // Build filters dynamically — only apply what was sent
+  const where = {};
+  if (search)    where.name = { contains: search };
+  if (city)      where.city = city;
+  if (type)      where.companyType = type;
+  if (minRating) where.rating = { gte: parseFloat(minRating) };
+
+  // Sort options: by rating (worst first = pain points), name, or date added
+  const orderBy =
+    sort === 'rating_asc'  ? { rating: 'asc' }  :
+    sort === 'rating_desc' ? { rating: 'desc' } :
+    sort === 'name'        ? { name: 'asc' }    :
+    sort === 'reviews'     ? { reviewCount: 'desc' } :
+    { addedAt: 'desc' };
+
+  const companies = await prisma.company.findMany({ where, orderBy });
   res.json(companies);
 }
 
@@ -108,6 +139,7 @@ async function searchApollo(req, res) {
 }
 
 module.exports = {
+  getCities,
   getAllCompanies,
   getCompanyById,
   createCompany,
