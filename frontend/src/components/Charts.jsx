@@ -8,14 +8,8 @@ import {
 } from 'recharts';
 import { getStats } from '../services/api';
 
-// Purple palette — consistent with the app accent color
-const PURPLE = 'var(--accent)';
-const PURPLE_LIGHT = 'var(--accent-bg)';
-
-// Colors for the pie/donut chart slices
 const PIE_COLORS = ['#aa3bff', '#7c3aed', '#a855f7', '#c084fc', '#e9d5ff'];
 
-// Human-readable labels for the company type codes stored in the database
 const TYPE_NAMES = {
   property_manager: 'Property Manager',
   real_estate:      'Real Estate',
@@ -23,39 +17,46 @@ const TYPE_NAMES = {
   unknown:          'Unknown',
 };
 
-// Custom tooltip that appears when you hover over a bar or slice
+// px per bar row in horizontal bar charts — enough for the bar + label breathing room
+const ROW_HEIGHT = 26;
+
+// Width the YAxis needs so the longest Spanish city name never gets clipped.
+// "L'Hospitalet de Llobregat" ≈ 25 chars × ~7px = 175px — use 180 to be safe.
+const CITY_AXIS_WIDTH = 180;
+
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md text-sm">
-      {label && <p className="font-medium text-gray-700 mb-1">{label}</p>}
+    <div style={{ background: 'var(--surface)', borderColor: 'var(--border-color)' }}
+      className="border rounded-lg px-3 py-2 shadow-md text-sm">
+      {label && <p className="font-medium mb-1" style={{ color: 'var(--text)' }}>{label}</p>}
       {payload.map((entry, i) => (
-        <p key={i} className="text-gray-600">
-          {entry.name}: <span className="font-semibold text-[var(--accent)]">{entry.value}</span>
+        <p key={i} style={{ color: 'var(--text-muted)' }}>
+          {entry.name}:{' '}
+          <span className="font-semibold text-[var(--accent)]">{entry.value}</span>
         </p>
       ))}
     </div>
   );
 }
 
-// Wrapper card for each individual chart
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="bg-white border border-gray-200 border-l-4 border-l-[var(--accent)] rounded-xl p-6 shadow-sm">
-      <p className="text-sm font-semibold text-gray-800">{title}</p>
-      {subtitle && <p className="text-xs text-gray-400 mt-0.5 mb-5">{subtitle}</p>}
+    <div className="border border-l-4 border-l-[var(--accent)] rounded-xl p-6 shadow-sm"
+      style={{ background: 'var(--surface)', borderColor: 'var(--border-color)' }}>
+      <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{title}</p>
+      {subtitle && <p className="text-xs mt-0.5 mb-5" style={{ color: 'var(--text-subtle)' }}>{subtitle}</p>}
       {!subtitle && <div className="mb-5" />}
       {children}
     </div>
   );
 }
 
-// The three summary numbers shown at the top of the page
 function StatBadge({ label, value }) {
   return (
     <div className="flex-1 bg-[var(--accent-bg)] border border-[var(--accent-border)] rounded-xl p-4 text-center">
       <p className="text-2xl font-bold text-[var(--accent)]">{value}</p>
-      <p className="text-xs text-gray-500 mt-1">{label}</p>
+      <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{label}</p>
     </div>
   );
 }
@@ -84,18 +85,17 @@ export default function Charts() {
     return <p className="text-red-400 text-sm text-center py-12">{error}</p>;
   }
 
-  // Map raw DB rows to the shape Recharts expects: [{ name, value }]
   const ratingData = stats.ratingDistribution.map((row) => ({
     name: `${row.star} ★`,
     count: row.count,
   }));
 
+  // All cities sorted by count — backend no longer caps at 10
   const cityData = stats.topCities.map((row) => ({
     name: row.city,
     count: row.count,
   }));
 
-  // Pie chart data — replace DB codes with human-readable labels
   const typeData = stats.companyTypes.map((row) => ({
     name: TYPE_NAMES[row.type] || row.type,
     value: row.count,
@@ -106,57 +106,51 @@ export default function Charts() {
     count: row.count,
   }));
 
+  // All cities with avg rating — sorted best first
   const avgRatingCityData = stats.avgRatingByCity.map((row) => ({
     name: row.city,
     avgRating: Number(row.avgRating),
     count: row.count,
   }));
 
+  // Dynamic heights so every city gets a row — no clipping
+  const cityChartHeight  = cityData.length        * ROW_HEIGHT + 40;
+  const ratingCityHeight = avgRatingCityData.length * ROW_HEIGHT + 40;
+
+  const axisTick = { fontSize: 11, fill: 'var(--text-muted)' };
+
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── Summary numbers ─────────────────────────────── */}
+      {/* ── Summary badges ──────────────────────────────── */}
       <div className="flex gap-4">
-        <StatBadge label="Companies tracked" value={stats.totals.totalCompanies} />
-        <StatBadge label="Average rating" value={`${Number(stats.totals.avgRating).toFixed(2)} ★`} />
-        <StatBadge label="Total reviews" value={Number(stats.totals.totalReviews).toLocaleString()} />
+        <StatBadge label="Companies tracked"  value={stats.totals.totalCompanies} />
+        <StatBadge label="Average rating"     value={`${Number(stats.totals.avgRating).toFixed(2)} ★`} />
+        <StatBadge label="Total reviews"      value={Number(stats.totals.totalReviews).toLocaleString()} />
       </div>
 
-      {/* ── Row 1: Rating distribution + Company types ── */}
+      {/* ── Row 1: Rating + donut ───────────────────────── */}
       <div className="grid grid-cols-2 gap-6">
 
-        <ChartCard
-          title="Rating distribution"
-          subtitle="How many companies have each star rating (1–5)"
-        >
+        <ChartCard title="Rating distribution" subtitle="Companies per star rating (1 – 5)">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={ratingData} barSize={40}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+            <BarChart data={ratingData} barSize={44}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <XAxis dataKey="name" tick={axisTick} />
+              <YAxis tick={axisTick} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" name="Companies" fill="var(--accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard
-          title="Company type breakdown"
-          subtitle="Share of property managers, real estate firms, and admin agencies"
-        >
+        <ChartCard title="Company type breakdown" subtitle="Property managers vs real estate vs admin agencies">
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie
-                data={typeData}
-                dataKey="value"
-                nameKey="name"
-                // innerRadius makes it a donut shape — more modern than a full pie
-                innerRadius={55}
-                outerRadius={90}
-                paddingAngle={3}
-              >
-                {typeData.map((_, index) => (
-                  <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+              <Pie data={typeData} dataKey="value" nameKey="name"
+                innerRadius={55} outerRadius={90} paddingAngle={3}>
+                {typeData.map((_, i) => (
+                  <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip content={<CustomTooltip />} />
@@ -166,34 +160,38 @@ export default function Charts() {
         </ChartCard>
       </div>
 
-      {/* ── Row 2: Top cities ───────────────────────────── */}
+      {/* ── All cities by company count ─────────────────── */}
       <ChartCard
         title="Companies by city"
-        subtitle="Top 10 Spanish cities by number of tracked companies"
+        subtitle={`All ${cityData.length} cities — sorted by number of tracked companies`}
       >
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={cityData} layout="vertical" barSize={18} margin={{ left: 80 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 12 }} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
+        {/* Height grows with number of cities so every row is readable */}
+        <ResponsiveContainer width="100%" height={cityChartHeight}>
+          <BarChart data={cityData} layout="vertical" barSize={14}
+            margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
+            <XAxis type="number" tick={axisTick} />
+            <YAxis
+              type="category"
+              dataKey="name"
+              tick={axisTick}
+              width={CITY_AXIS_WIDTH}   // wide enough for the longest Spanish city name
+            />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="count" name="Companies" fill="var(--accent)" radius={[0, 4, 4, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
 
-      {/* ── Row 3: Reviews + Avg rating by city ─────────── */}
+      {/* ── Row 3: Review buckets + avg rating by city ──── */}
       <div className="grid grid-cols-2 gap-6">
 
-        <ChartCard
-          title="Review volume distribution"
-          subtitle="How many reviews do companies typically have?"
-        >
+        <ChartCard title="Review volume distribution" subtitle="How many reviews do companies typically have?">
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={reviewData} barSize={40}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
+            <BarChart data={reviewData} barSize={44}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+              <XAxis dataKey="name" tick={axisTick} />
+              <YAxis tick={axisTick} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="count" name="Companies" fill="var(--accent)" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -202,18 +200,28 @@ export default function Charts() {
 
         <ChartCard
           title="Average rating by city"
-          subtitle="Cities with the best-rated firms (min. 5 companies)"
+          subtitle={`All ${avgRatingCityData.length} cities (min. 3 companies) — best rated first`}
         >
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={avgRatingCityData} layout="vertical" barSize={16} margin={{ left: 100 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
-              {/* Domain [3, 5] so small differences are visible */}
-              <XAxis type="number" domain={[3, 5]} tick={{ fontSize: 12 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="avgRating" name="Avg rating" fill="var(--accent)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div style={{ overflowY: 'auto', maxHeight: 420 }}>
+            <div style={{ height: ratingCityHeight, minHeight: 220 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={avgRatingCityData} layout="vertical" barSize={14}
+                  margin={{ left: 0, right: 16, top: 4, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" horizontal={false} />
+                  {/* Domain starts at 3 so small differences between cities are visible */}
+                  <XAxis type="number" domain={[3, 5]} tick={axisTick} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    tick={axisTick}
+                    width={CITY_AXIS_WIDTH}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="avgRating" name="Avg rating" fill="var(--accent)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </ChartCard>
       </div>
 

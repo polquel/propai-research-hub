@@ -32,14 +32,13 @@ router.get('/', async (req, res) => {
         ORDER BY star ASC
       `,
 
-      // 2. Top 10 cities by company count
+      // 2. All cities by company count — no LIMIT so the chart shows every city
       prisma.$queryRaw`
         SELECT city, COUNT(*) AS count
         FROM Company
         WHERE city IS NOT NULL AND city != ''
         GROUP BY city
         ORDER BY count DESC
-        LIMIT 10
       `,
 
       // 3. Company type breakdown (property_manager / real_estate / admin_agency)
@@ -69,15 +68,14 @@ router.get('/', async (req, res) => {
         ORDER BY MIN(reviewCount) ASC
       `,
 
-      // 5. Average rating per city (only cities with at least 5 companies)
+      // 5. Average rating per city — all cities with at least 3 companies
       prisma.$queryRaw`
         SELECT city, ROUND(AVG(rating), 2) AS avgRating, COUNT(*) AS count
         FROM Company
         WHERE city IS NOT NULL AND rating IS NOT NULL
         GROUP BY city
-        HAVING COUNT(*) >= 5
+        HAVING COUNT(*) >= 3
         ORDER BY avgRating DESC
-        LIMIT 10
       `,
 
       // 6. Overall totals for the summary header
