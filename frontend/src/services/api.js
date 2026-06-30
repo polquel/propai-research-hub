@@ -5,8 +5,20 @@ const OPPORTUNITIES_URL = '/api/opportunities';
 
 // --- Companies ---
 
-export async function getAllCompanies() {
-  const response = await fetch(COMPANIES_URL);
+// filters: { search, city, type, minRating, sort }
+export async function getAllCompanies(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.search)    params.set('search', filters.search);
+  if (filters.city)      params.set('city', filters.city);
+  if (filters.type)      params.set('type', filters.type);
+  if (filters.minRating) params.set('minRating', filters.minRating);
+  if (filters.sort)      params.set('sort', filters.sort);
+  const response = await fetch(`${COMPANIES_URL}?${params}`);
+  return response.json();
+}
+
+export async function getCities() {
+  const response = await fetch(`${COMPANIES_URL}/meta/cities`);
   return response.json();
 }
 
@@ -41,4 +53,11 @@ export async function createOpportunity(data) {
 
 export async function deleteOpportunity(id) {
   await fetch(`${OPPORTUNITIES_URL}/${id}`, { method: 'DELETE' });
+}
+
+// --- Stats (for the charts dashboard) ---
+
+export async function getStats() {
+  const response = await fetch('/api/stats');
+  return response.json();
 }

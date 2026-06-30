@@ -1,128 +1,149 @@
-// Root component — two tabs: Companies (market map) and AI Opportunities (product ideas).
+// Root component — Companies, AI Opportunities, and Charts tabs.
 
-import { useState, useEffect } from 'react';
-import { getAllCompanies, getAllOpportunities } from './services/api';
+import { useState, useEffect, useCallback } from 'react';
+import { getAllCompanies, getAllOpportunities, getCities } from './services/api';
 import CompanyForm from './components/CompanyForm';
 import CompanyList from './components/CompanyList';
 import CompanyImport from './components/CompanyImport';
+import CompanyFilters from './components/CompanyFilters';
 import OpportunityForm from './components/OpportunityForm';
 import OpportunityList from './components/OpportunityList';
+import Charts from './components/Charts';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('companies');
-  const [companies, setCompanies] = useState([]);
-  const [opportunities, setOpportunities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchAll() {
-      const [companyData, opportunityData] = await Promise.all([
-        getAllCompanies(),
-        getAllOpportunities(),
-      ]);
-      setCompanies(companyData);
-      setOpportunities(opportunityData);
-      setIsLoading(false);
-    }
-    fetchAll();
+  // Companies state
+  const [companies, setCompanies] = useState([]);
+  const [totalCompanies, setTotalCompanies] = useState(0);
+  const [cities, setCities] = useState([]);
+  const [filters, setFilters] = useState({});
+  const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
+
+  // Opportunities state
+  const [opportunities, setOpportunities] = useState([]);
+  const [isLoadingOpp, setIsLoadingOpp] = useState(true);
+
+  // Fetch companies whenever filters change
+  const fetchCompanies = useCallback(async (activeFilters) => {
+    setIsLoadingCompanies(true);
+    const data = await getAllCompanies(activeFilters);
+    setCompanies(data);
+    setIsLoadingCompanies(false);
   }, []);
 
-  function handleCompanyAdded(c) { setCompanies([c, ...companies]); }
-  function handleCompanyDeleted(id) { setCompanies(companies.filter((c) => c.id !== id)); }
+  // On first load: fetch cities list, total count, opportunities
+  useEffect(() => {
+    getCities().then(setCities);
+    getAllOpportunities().then((data) => {
+      setOpportunities(data);
+      setIsLoadingOpp(false);
+    });
+    // Get the unfiltered total for the header badge
+    getAllCompanies({}).then((data) => setTotalCompanies(data.length));
+    fetchCompanies({});
+  }, [fetchCompanies]);
 
-  function handleOpportunityAdded(o) { setOpportunities([o, ...opportunities]); }
-  function handleOpportunityDeleted(id) { setOpportunities(opportunities.filter((o) => o.id !== id)); }
+  // Re-fetch companies whenever filters change
+  useEffect(() => {
+    fetchCompanies(filters);
+  }, [filters, fetchCompanies]);
+
+  function handleCompanyAdded(c) {
+    setCompanies((prev) => [c, ...prev]);
+    setTotalCompanies((n) => n + 1);
+  }
+  function handleCompanyDeleted(id) {
+    setCompanies((prev) => prev.filter((c) => c.id !== id));
+    setTotalCompanies((n) => n - 1);
+  }
+  function handleOpportunityAdded(o) { setOpportunities((prev) => [o, ...prev]); }
+  function handleOpportunityDeleted(id) { setOpportunities((prev) => prev.filter((o) => o.id !== id)); }
 
   return (
     <div className="min-h-screen bg-gray-50">
-
-      {/* Purple accent bar at the very top */}
       <div className="h-1 bg-[var(--accent)]" />
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8">
 
-        {/* ── Header ─────────────────────────────────────────── */}
+        {/* Header */}
         <div className="flex items-end justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              PropAI Research Hub
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Market intelligence for building an AI product for HOAs
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">PropAI Research Hub</h1>
+            <p className="text-gray-400 text-sm mt-1">Market intelligence for building an AI product for HOAs</p>
           </div>
-
-          {/* Live count badges in the top-right corner */}
-          {!isLoading && (
-            <div className="flex gap-2 text-xs font-medium">
-              <span className="bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent-border)] rounded-full px-3 py-1">
-                {companies.length} companies
-              </span>
-              <span className="bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent-border)] rounded-full px-3 py-1">
-                {opportunities.length} opportunities
-              </span>
-            </div>
-          )}
+          <div className="flex gap-2 text-xs font-medium">
+            <span className="bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent-border)] rounded-full px-3 py-1">
+              {totalCompanies} companies
+            </span>
+            <span className="bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent-border)] rounded-full px-3 py-1">
+              {opportunities.length} opportunities
+            </span>
+          </div>
         </div>
 
-        {/* ── Tab bar ────────────────────────────────────────── */}
+        {/* Tabs */}
         <div className="flex border-b border-gray-200 mb-8">
-          <TabButton
-            label={`Companies (${companies.length})`}
-            active={activeTab === 'companies'}
-            onClick={() => setActiveTab('companies')}
-          />
-          <TabButton
-            label={`AI Opportunities (${opportunities.length})`}
-            active={activeTab === 'opportunities'}
-            onClick={() => setActiveTab('opportunities')}
-          />
+          <TabButton label={`Companies (${totalCompanies})`} active={activeTab === 'companies'} onClick={() => setActiveTab('companies')} />
+          <TabButton label={`AI Opportunities (${opportunities.length})`} active={activeTab === 'opportunities'} onClick={() => setActiveTab('opportunities')} />
+          <TabButton label="Charts" active={activeTab === 'charts'} onClick={() => setActiveTab('charts')} />
         </div>
 
-        {/* ── Content ────────────────────────────────────────── */}
-        {isLoading ? (
-          // Spinner while data loads
-          <div className="flex justify-center items-center py-24">
-            <div className="w-6 h-6 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-          </div>
-        ) : (
-          <>
-            {activeTab === 'companies' && (
-              // Two-column: sidebar (forms) + main (list)
-              <div className="flex gap-6 items-start">
-                <aside className="w-80 shrink-0 flex flex-col gap-4">
-                  <CompanyImport onCompanyAdded={handleCompanyAdded} />
-                  <CompanyForm onCompanyAdded={handleCompanyAdded} />
-                </aside>
-                <main className="flex-1 min-w-0">
-                  <SectionLabel text={`Tracked Companies (${companies.length})`} />
-                  <CompanyList companies={companies} onDelete={handleCompanyDeleted} />
-                </main>
-              </div>
-            )}
+        {/* Companies tab */}
+        {activeTab === 'companies' && (
+          <div className="flex gap-6 items-start">
+            {/* Sidebar: filters + import + manual add */}
+            <aside className="w-72 shrink-0 flex flex-col gap-4">
+              <CompanyFilters
+                filters={filters}
+                onChange={setFilters}
+                cities={cities}
+                total={companies.length}
+              />
+              <CompanyImport onCompanyAdded={handleCompanyAdded} />
+              <CompanyForm onCompanyAdded={handleCompanyAdded} />
+            </aside>
 
-            {activeTab === 'opportunities' && (
-              // Two-column: sidebar (form) + main (list)
-              <div className="flex gap-6 items-start">
-                <aside className="w-80 shrink-0">
-                  <OpportunityForm onOpportunityAdded={handleOpportunityAdded} />
-                </aside>
-                <main className="flex-1 min-w-0">
-                  <SectionLabel text={`Feature Ideas (${opportunities.length}) — sorted by viability`} />
-                  <OpportunityList opportunities={opportunities} onDelete={handleOpportunityDeleted} />
-                </main>
-              </div>
-            )}
-          </>
+            {/* Main: company list */}
+            <main className="flex-1 min-w-0">
+              <SectionLabel text={`${companies.length} companies${Object.values(filters).some(Boolean) ? ' (filtered)' : ''}`} />
+              {isLoadingCompanies ? (
+                <div className="flex justify-center py-16">
+                  <div className="w-5 h-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                </div>
+              ) : (
+                <CompanyList companies={companies} onDelete={handleCompanyDeleted} />
+              )}
+            </main>
+          </div>
         )}
+
+        {/* Opportunities tab */}
+        {activeTab === 'opportunities' && (
+          <div className="flex gap-6 items-start">
+            <aside className="w-72 shrink-0">
+              <OpportunityForm onOpportunityAdded={handleOpportunityAdded} />
+            </aside>
+            <main className="flex-1 min-w-0">
+              <SectionLabel text={`${opportunities.length} feature ideas — sorted by viability`} />
+              {isLoadingOpp ? (
+                <div className="flex justify-center py-16">
+                  <div className="w-5 h-5 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+                </div>
+              ) : (
+                <OpportunityList opportunities={opportunities} onDelete={handleOpportunityDeleted} />
+              )}
+            </main>
+          </div>
+        )}
+
+        {/* Charts tab */}
+        {activeTab === 'charts' && <Charts />}
       </div>
     </div>
   );
 }
 
-// ── Small helper components ──────────────────────────────
-
-// A single tab button — purple underline when active
 function TabButton({ label, active, onClick }) {
   return (
     <button
@@ -138,11 +159,8 @@ function TabButton({ label, active, onClick }) {
   );
 }
 
-// The small uppercase label above a list
 function SectionLabel({ text }) {
   return (
-    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">
-      {text}
-    </p>
+    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">{text}</p>
   );
 }
