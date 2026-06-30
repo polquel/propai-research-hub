@@ -15,7 +15,6 @@ export default function App() {
 
   // Companies state
   const [companies, setCompanies] = useState([]);
-  const [totalCompanies, setTotalCompanies] = useState(0);
   const [cities, setCities] = useState([]);
   const [filters, setFilters] = useState({});
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
@@ -24,39 +23,35 @@ export default function App() {
   const [opportunities, setOpportunities] = useState([]);
   const [isLoadingOpp, setIsLoadingOpp] = useState(true);
 
-  // Fetch companies whenever filters change
+  // Fetch companies (called on mount and whenever filters change)
   const fetchCompanies = useCallback(async (activeFilters) => {
     setIsLoadingCompanies(true);
-    const data = await getAllCompanies(activeFilters);
-    setCompanies(data);
-    setIsLoadingCompanies(false);
+    try {
+      const data = await getAllCompanies(activeFilters);
+      setCompanies(data);
+    } catch {
+      // If the backend is down, stop the spinner instead of looping forever
+      setCompanies([]);
+    } finally {
+      setIsLoadingCompanies(false);
+    }
   }, []);
 
-  // On first load: fetch cities list, total count, opportunities
+  // On first load: cities + opportunities (one-time, no deps that change)
   useEffect(() => {
-    getCities().then(setCities);
-    getAllOpportunities().then((data) => {
-      setOpportunities(data);
-      setIsLoadingOpp(false);
-    });
-    // Get the unfiltered total for the header badge
-    getAllCompanies({}).then((data) => setTotalCompanies(data.length));
-    fetchCompanies({});
-  }, [fetchCompanies]);
+    getCities().then(setCities).catch(() => {});
+    getAllOpportunities()
+      .then((data) => { setOpportunities(data); setIsLoadingOpp(false); })
+      .catch(() => setIsLoadingOpp(false));
+  }, []); // empty deps = runs exactly once on mount
 
-  // Re-fetch companies whenever filters change
+  // Fetch companies whenever filters change (also runs on mount with filters = {})
   useEffect(() => {
     fetchCompanies(filters);
   }, [filters, fetchCompanies]);
 
-  function handleCompanyAdded(c) {
-    setCompanies((prev) => [c, ...prev]);
-    setTotalCompanies((n) => n + 1);
-  }
-  function handleCompanyDeleted(id) {
-    setCompanies((prev) => prev.filter((c) => c.id !== id));
-    setTotalCompanies((n) => n - 1);
-  }
+  function handleCompanyAdded(c) { setCompanies((prev) => [c, ...prev]); }
+  function handleCompanyDeleted(id) { setCompanies((prev) => prev.filter((c) => c.id !== id)); }
   function handleOpportunityAdded(o) { setOpportunities((prev) => [o, ...prev]); }
   function handleOpportunityDeleted(id) { setOpportunities((prev) => prev.filter((o) => o.id !== id)); }
 
@@ -74,7 +69,7 @@ export default function App() {
           </div>
           <div className="flex gap-2 text-xs font-medium">
             <span className="bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent-border)] rounded-full px-3 py-1">
-              {totalCompanies} companies
+              {companies.length} companies
             </span>
             <span className="bg-[var(--accent-bg)] text-[var(--accent)] border border-[var(--accent-border)] rounded-full px-3 py-1">
               {opportunities.length} opportunities
@@ -84,7 +79,7 @@ export default function App() {
 
         {/* Tabs */}
         <div className="flex border-b border-gray-200 mb-8">
-          <TabButton label={`Companies (${totalCompanies})`} active={activeTab === 'companies'} onClick={() => setActiveTab('companies')} />
+          <TabButton label={`Companies (${companies.length})`} active={activeTab === 'companies'} onClick={() => setActiveTab('companies')} />
           <TabButton label={`AI Opportunities (${opportunities.length})`} active={activeTab === 'opportunities'} onClick={() => setActiveTab('opportunities')} />
           <TabButton label="Charts" active={activeTab === 'charts'} onClick={() => setActiveTab('charts')} />
         </div>
