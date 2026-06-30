@@ -8,15 +8,22 @@ datasource db {
   provider = "sqlite"
 }
 
-// Company = a property management company — a potential paying client
+// Company = a property management company found during market research
 model Company {
   id            String   @id @default(uuid())
   name          String
   website       String?
   country       String?
-  services      String?  // e.g. "billing, maintenance, resident portal"
-  employeeCount String?  // e.g. "50-200", "500+"
-  notes         String?  // pain points, AI gaps, observations
+  city          String?          // City where the company operates
+  address       String?          // Full street address
+  phone         String?
+  services      String?
+  employeeCount String?
+  companyType   String?          // "property_manager" | "real_estate" | "admin_agency"
+  rating        Float?           // Average star rating (e.g. 4.2)
+  reviewCount   Int?             // Total number of reviews
+  reviews       String?          // JSON array of review texts — where pain points live
+  notes         String?
   addedAt       DateTime @default(now())
 }
 
